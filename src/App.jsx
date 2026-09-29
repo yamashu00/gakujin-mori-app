@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { loadState, saveState, makeId } from './storage.js';
 import { demoDiscoveries } from './demoData.js';
+import { hasSharedBackend, pushDiscovery, fetchSharedDiscoveries } from './api.js';
 
 import Onboarding from './components/Onboarding.jsx';
 import Home from './components/Home.jsx';
@@ -28,10 +29,26 @@ export default function App() {
   const [view, setView] = useState('home');
   const [selectedId, setSelectedId] = useState(null);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [remoteDiscoveries, setRemoteDiscoveries] = useState([]);
 
   useEffect(() => {
     saveState(state);
   }, [state]);
+
+  useEffect(() => {
+    if (!hasSharedBackend) return;
+    let cancelled = false;
+    const poll = async () => {
+      const remote = await fetchSharedDiscoveries();
+      if (!cancelled) setRemoteDiscoveries(remote);
+    };
+    poll();
+    const interval = setInterval(poll, 12000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   if (!state.team) {
     return (
@@ -65,17 +82,25 @@ export default function App() {
       ...fields,
     };
     setState((s) => ({ ...s, discoveries: [...s.discoveries, discovery] }));
+    pushDiscovery(discovery);
     openDetail(discovery.id);
   };
 
   const calcHeight = (id, height) => {
+    let updated;
     setState((s) => ({
       ...s,
-      discoveries: s.discoveries.map((d) => (d.id === id ? { ...d, height } : d)),
+      discoveries: s.discoveries.map((d) => {
+        if (d.id !== id) return d;
+        updated = { ...d, height };
+        return updated;
+      }),
     }));
+    if (updated) pushDiscovery(updated);
   };
 
   const updateMeasurements = (id, fields) => {
+    let updated;
     setState((s) => ({
       ...s,
       discoveries: s.discoveries.map((d) => {
@@ -85,16 +110,24 @@ export default function App() {
           const rad = (merged.angle * Math.PI) / 180;
           merged.height = merged.distance * Math.tan(rad) + merged.eyeHeight;
         }
+        updated = merged;
         return merged;
       }),
     }));
+    if (updated) pushDiscovery(updated);
   };
 
   const saveNotes = (id, notes) => {
+    let updated;
     setState((s) => ({
       ...s,
-      discoveries: s.discoveries.map((d) => (d.id === id ? { ...d, notes } : d)),
+      discoveries: s.discoveries.map((d) => {
+        if (d.id !== id) return d;
+        updated = { ...d, notes };
+        return updated;
+      }),
     }));
+    if (updated) pushDiscovery(updated);
   };
 
   const deleteDiscovery = (id) => {
@@ -102,8 +135,12 @@ export default function App() {
     navigate('records');
   };
 
+  const remoteOnly = remoteDiscoveries.filter(
+    (r) => !state.discoveries.some((d) => d.id === r.id)
+  );
   const allMapDiscoveries = [
     ...state.discoveries,
+    ...remoteOnly,
     ...(state.showDemo ? demoDiscoveries : []),
   ];
 
@@ -159,6 +196,7 @@ export default function App() {
           discoveries={allMapDiscoveries}
           showDemo={state.showDemo}
           onToggleDemo={(v) => setState((s) => ({ ...s, showDemo: v }))}
+          hasSharedBackend={hasSharedBackend}
         />
       )}
 

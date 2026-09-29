@@ -15,7 +15,7 @@ function markerIcon(category, isDemo) {
   });
 }
 
-export default function MapScreen({ discoveries, showDemo, onToggleDemo }) {
+export default function MapScreen({ discoveries, showDemo, onToggleDemo, hasSharedBackend }) {
   const mapRef = useRef(null);
   const containerRef = useRef(null);
   const layerRef = useRef(null);
@@ -70,7 +70,9 @@ export default function MapScreen({ discoveries, showDemo, onToggleDemo }) {
       </div>
       <div className="map-wrap" ref={containerRef} />
       <div className="hint" style={{ marginTop: 8 }}>
-        ※このモックでは位置データは端末内（localStorage）にのみ保存されます。他の班の端末とは自動で共有されません。
+        {hasSharedBackend
+          ? '🔗 他の班のデータも共有中（約12秒ごとに自動更新。写真は端末内のみで共有されない）'
+          : '※共有バックエンド未設定。位置データは端末内（localStorage）にのみ保存され、他の班とは共有されません。'}
       </div>
     </div>
   );
