@@ -1,5 +1,15 @@
-// TODO: 岳人の森の正確な座標に差し替えること（現在は神山町中心部付近の仮座標）
-export const FIELD_CENTER = { lat: 33.9727, lng: 134.3948 };
+// 岳人の森キャンプ場（徳島県名西郡神山町、OpenStreetMapでジオコーディング確認済み）
+const REAL_FIELD_CENTER = { lat: 33.9255613, lng: 134.2715186 };
+
+// VITE_FIELD_LAT / VITE_FIELD_LNG が設定されていればそちらを優先する。
+// 現地に行かずに神山まるごと高専周辺でテストする場合などに、
+// Vercelの別プロジェクト（環境変数）や `.env.local` で上書きする想定。
+const envLat = Number(import.meta.env.VITE_FIELD_LAT);
+const envLng = Number(import.meta.env.VITE_FIELD_LNG);
+export const FIELD_CENTER =
+  Number.isFinite(envLat) && Number.isFinite(envLng)
+    ? { lat: envLat, lng: envLng }
+    : REAL_FIELD_CENTER;
 
 const offset = (dLat, dLng) => ({
   lat: FIELD_CENTER.lat + dLat,
