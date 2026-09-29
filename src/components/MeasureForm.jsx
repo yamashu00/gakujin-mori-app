@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { compressImage } from '../imageUtils.js';
+import AngleAssist from './AngleAssist.jsx';
 
 const CATEGORIES = ['木', '植物', '建物', '斜面', '岩', 'その他'];
 
@@ -14,6 +15,7 @@ export default function MeasureForm({ defaultEyeHeight, onCancel, onSave }) {
   const [distance, setDistance] = useState('');
   const [angle, setAngle] = useState('');
   const [eyeHeight, setEyeHeight] = useState(String(defaultEyeHeight || '1.55'));
+  const [showAngleAssist, setShowAngleAssist] = useState(false);
 
   const handlePhoto = async (e) => {
     const file = e.target.files?.[0];
@@ -174,7 +176,10 @@ export default function MeasureForm({ defaultEyeHeight, onCancel, onSave }) {
             />
             <span>°</span>
           </div>
-          <div className="hint">分度器やアプリの傾き表示などで測った角度を手入力しよう。</div>
+          <div className="hint">分度器や下のセンサーで測った角度を入力しよう。</div>
+          <button type="button" className="btn btn-outline" style={{ marginTop: 8 }} onClick={() => setShowAngleAssist(true)}>
+            📐 角度センサーを使う（目安）
+          </button>
         </div>
 
         <div className="field">
@@ -197,6 +202,16 @@ export default function MeasureForm({ defaultEyeHeight, onCancel, onSave }) {
           やめる
         </button>
       </div>
+
+      {showAngleAssist && (
+        <AngleAssist
+          onClose={() => setShowAngleAssist(false)}
+          onUse={(a) => {
+            setAngle(String(a));
+            setShowAngleAssist(false);
+          }}
+        />
+      )}
     </div>
   );
 }

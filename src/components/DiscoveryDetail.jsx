@@ -3,7 +3,72 @@ import TriangleDiagram from './TriangleDiagram.jsx';
 
 const CATEGORY_ICON = { 木: '🌲', 植物: '🌿', 建物: '🏠', 斜面: '⛰️', 岩: '🪨', その他: '❓' };
 
-export default function DiscoveryDetail({ discovery, unlocked, onCalculate, onSaveNotes, onDelete, onRequestUnlock }) {
+function MeasurementCard({ discovery, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [distance, setDistance] = useState(discovery.distance);
+  const [angle, setAngle] = useState(discovery.angle);
+  const [eyeHeight, setEyeHeight] = useState(discovery.eyeHeight);
+
+  if (!editing) {
+    return (
+      <div className="card" style={{ background: '#f2ede0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}>
+          <span>距離</span><b>{discovery.distance}m</b>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}>
+          <span>角度</span><b>{discovery.angle}°</b>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 10 }}>
+          <span>目線</span><b>{discovery.eyeHeight}m</b>
+        </div>
+        <button className="btn btn-secondary" style={{ marginBottom: 0 }} onClick={() => setEditing(true)}>
+          ✏️ 数値を修正する
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card" style={{ background: '#f2ede0' }}>
+      <div className="field">
+        <label>距離</label>
+        <div className="unit">
+          <input type="number" inputMode="decimal" value={distance} onChange={(e) => setDistance(e.target.value)} />
+          <span>m</span>
+        </div>
+      </div>
+      <div className="field">
+        <label>角度</label>
+        <div className="unit">
+          <input type="number" inputMode="decimal" value={angle} onChange={(e) => setAngle(e.target.value)} />
+          <span>°</span>
+        </div>
+      </div>
+      <div className="field" style={{ marginBottom: 12 }}>
+        <label>目線の高さ</label>
+        <div className="unit">
+          <input type="number" step="0.01" value={eyeHeight} onChange={(e) => setEyeHeight(e.target.value)} />
+          <span>m</span>
+        </div>
+      </div>
+      <button
+        className="btn btn-accent"
+        disabled={!(Number(distance) > 0 && Number(angle) > 0 && Number(angle) < 90 && Number(eyeHeight) > 0)}
+        onClick={() => {
+          onSave({ distance: Number(distance), angle: Number(angle), eyeHeight: Number(eyeHeight) });
+          setEditing(false);
+        }}
+      >
+        保存する
+      </button>
+      <button className="btn btn-secondary" style={{ marginBottom: 0 }} onClick={() => setEditing(false)}>
+        やめる
+      </button>
+    </div>
+  );
+}
+
+export default function DiscoveryDetail({ discovery, unlocked, onCalculate, onUpdateMeasurements, onSaveNotes, onDelete, onRequestUnlock }) {
   const [notes, setNotes] = useState(discovery.notes || '');
   const hasHeight = discovery.height != null;
 
@@ -26,17 +91,7 @@ export default function DiscoveryDetail({ discovery, unlocked, onCalculate, onSa
 
         {!unlocked ? (
           <>
-            <div className="card" style={{ background: '#f2ede0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}>
-                <span>距離</span><b>{discovery.distance}m</b>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}>
-                <span>角度</span><b>{discovery.angle}°</b>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                <span>目線</span><b>{discovery.eyeHeight}m</b>
-              </div>
-            </div>
+            <MeasurementCard discovery={discovery} onSave={(f) => onUpdateMeasurements(discovery.id, f)} />
             <div className="locked-box">
               <div>この3つの数字には、どんな関係があると思う？</div>
               <div className="qmark">？？？</div>
@@ -48,17 +103,7 @@ export default function DiscoveryDetail({ discovery, unlocked, onCalculate, onSa
           </>
         ) : !hasHeight ? (
           <>
-            <div className="card" style={{ background: '#f2ede0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}>
-                <span>距離</span><b>{discovery.distance}m</b>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}>
-                <span>角度</span><b>{discovery.angle}°</b>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                <span>目線</span><b>{discovery.eyeHeight}m</b>
-              </div>
-            </div>
+            <MeasurementCard discovery={discovery} onSave={(f) => onUpdateMeasurements(discovery.id, f)} />
             <div className="formula-box">
               角度が同じとき、高さ ÷ 距離 は同じ割合になる。この割合を tan（タンジェント）と呼ぶ。
               <br />
@@ -77,6 +122,10 @@ export default function DiscoveryDetail({ discovery, unlocked, onCalculate, onSa
             <TriangleDiagram distance={discovery.distance} angle={discovery.angle} height={discovery.height} />
             <div className="formula-box">
               {discovery.distance} × tan({discovery.angle}°) ＋ {discovery.eyeHeight} ＝ {discovery.height.toFixed(2)}m
+            </div>
+            <MeasurementCard discovery={discovery} onSave={(f) => onUpdateMeasurements(discovery.id, f)} />
+            <div className="hint" style={{ marginTop: -6, marginBottom: 14 }}>
+              数値を修正すると、高さは自動で計算し直される。
             </div>
           </>
         )}

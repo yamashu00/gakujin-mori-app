@@ -75,6 +75,21 @@ export default function App() {
     }));
   };
 
+  const updateMeasurements = (id, fields) => {
+    setState((s) => ({
+      ...s,
+      discoveries: s.discoveries.map((d) => {
+        if (d.id !== id) return d;
+        const merged = { ...d, ...fields };
+        if (d.height != null) {
+          const rad = (merged.angle * Math.PI) / 180;
+          merged.height = merged.distance * Math.tan(rad) + merged.eyeHeight;
+        }
+        return merged;
+      }),
+    }));
+  };
+
   const saveNotes = (id, notes) => {
     setState((s) => ({
       ...s,
@@ -132,6 +147,7 @@ export default function App() {
           discovery={selected}
           unlocked={state.unlocked}
           onCalculate={calcHeight}
+          onUpdateMeasurements={updateMeasurements}
           onSaveNotes={saveNotes}
           onDelete={deleteDiscovery}
           onRequestUnlock={() => setShowUnlockModal(true)}
