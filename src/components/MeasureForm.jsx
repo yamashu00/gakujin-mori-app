@@ -59,14 +59,12 @@ export default function MeasureForm({ defaultEyeHeight, onCancel, onSave }) {
     );
   };
 
-  const canSave =
-    name.trim().length > 0 &&
-    distance !== '' &&
-    angle !== '' &&
-    eyeHeight !== '' &&
-    Number(distance) > 0 &&
-    Number(angle) > 0 &&
-    Number(angle) < 90;
+  const missing = [];
+  if (name.trim().length === 0) missing.push('①対象物の名前');
+  if (distance === '' || !(Number(distance) > 0)) missing.push('⑤距離');
+  if (angle === '' || !(Number(angle) > 0 && Number(angle) < 90)) missing.push('⑥角度（0〜90の範囲）');
+  if (eyeHeight === '' || !(Number(eyeHeight) > 0)) missing.push('目線の高さ');
+  const canSave = missing.length === 0;
 
   const save = () => {
     onSave({
@@ -156,7 +154,7 @@ export default function MeasureForm({ defaultEyeHeight, onCancel, onSave }) {
             <input
               type="number"
               inputMode="decimal"
-              placeholder="12.5"
+              placeholder="例：12.5"
               value={distance}
               onChange={(e) => setDistance(e.target.value)}
             />
@@ -170,7 +168,7 @@ export default function MeasureForm({ defaultEyeHeight, onCancel, onSave }) {
             <input
               type="number"
               inputMode="decimal"
-              placeholder="38"
+              placeholder="例：38"
               value={angle}
               onChange={(e) => setAngle(e.target.value)}
             />
@@ -195,6 +193,11 @@ export default function MeasureForm({ defaultEyeHeight, onCancel, onSave }) {
           </div>
         </div>
 
+        {!canSave && (
+          <div className="error-text" style={{ marginBottom: 8 }}>
+            未入力・未確定の項目があります：{missing.join('、')}
+          </div>
+        )}
         <button className="btn btn-accent" disabled={!canSave} onClick={save}>
           保存する
         </button>
